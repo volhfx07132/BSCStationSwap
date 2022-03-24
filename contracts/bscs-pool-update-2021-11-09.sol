@@ -1,6 +1,6 @@
 /**
  *Submitted for verification at BscScan.com on 2021-07-31
-*/
+ */
 
 // File: @openzeppelin/contracts/utils/Context.sol
 
@@ -337,9 +337,7 @@ library Address {
         // for accounts without code, i.e. `keccak256('')`
         bytes32 codehash;
 
-
-            bytes32 accountHash
-         = 0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470;
+        bytes32 accountHash = 0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470;
         // solhint-disable-next-line no-inline-assembly
         assembly {
             codehash := extcodehash(account)
@@ -790,7 +788,7 @@ contract Ownable is Context {
      */
     // function renounceOwnership() public virtual onlyOwner {
     //    emit OwnershipTransferred(_owner, address(0));
-   //     _owner = address(0);
+    //     _owner = address(0);
     //}
 
     /**
@@ -973,14 +971,13 @@ contract BSCSBSCSIDOPool is
         uint256 lastStakingBlock;
         mapping(ERC20 => uint256) rewardDebt; // Reward debt
     }
-    
-    
+
     // store staking by user
     struct UserStake {
-      address addr;
-      uint256 amount;
-      uint256 startStakeBlock;
-      uint256 endStakeBlock;
+        address addr;
+        uint256 amount;
+        uint256 startStakeBlock;
+        uint256 endStakeBlock;
     }
     // user address to stake details
     mapping(address => UserStake[]) public stakeDetails;
@@ -1036,9 +1033,9 @@ contract BSCSBSCSIDOPool is
             "Mismatch length"
         );
 
-        require(address(_stakedToken) != address(0),"Invalid address");
-        require(address(_feeCollector) != address(0),"Invalid address");
-        require(address(_admin) != address(0),"Invalid address");
+        require(address(_stakedToken) != address(0), "Invalid address");
+        require(address(_feeCollector) != address(0), "Invalid address");
+        require(address(_admin) != address(0), "Invalid address");
 
         // Make this contract initialized
         isInitialized = true;
@@ -1085,114 +1082,122 @@ contract BSCSBSCSIDOPool is
         // Transfer ownership to the admin address who becomes owner of the contract
         transferOwnership(_admin);
     }
-    
-    function setLockingDuration(uint256 _numbBlocks) external onlyOwner{
+
+    function setLockingDuration(uint256 _numbBlocks) external onlyOwner {
         lockingDuration = _numbBlocks;
     }
-    
-    function enterStakeUser(uint256 _amount) internal returns(bool success) {
+
+    function enterStakeUser(uint256 _amount) internal returns (bool success) {
         UserStake memory currentStake;
-    
+
         currentStake.addr = msg.sender;
         currentStake.amount = _amount;
         currentStake.startStakeBlock = block.number;
         currentStake.endStakeBlock = block.number + lockingDuration;
-    
+
         stakeDetails[msg.sender].push(currentStake);
 
         return true;
     }
-    
-    function getUserStakedCount(address _user) 
-        internal 
-        returns(uint256) 
-    {
+
+    function getUserStakedCount(address _user) internal returns (uint256) {
         uint256 numStakes;
-        for(uint256 i = 0; i < stakeDetails[_user].length;  i++) {
+        for (uint256 i = 0; i < stakeDetails[_user].length; i++) {
             numStakes++;
         }
         return numStakes;
     }
-    
-    function getStakedSchedule(address _user) 
-        external 
-        returns 
-        (uint256[] memory, uint256[] memory, uint256[] memory)
-    {
-      uint256 stakedCount = getUserStakedCount(_user);
-      uint256[] memory startStake = new uint256[](stakedCount);
-      uint256[] memory endStake = new uint256[](stakedCount);
-      uint256[] memory amount = new uint256[](stakedCount);
-      
-      for (uint256 i = 0; i < stakedCount; i++) {
-          startStake[i] = stakeDetails[msg.sender][i].startStakeBlock; 
-          endStake[i] = stakeDetails[msg.sender][i].endStakeBlock;
-          amount[i] = stakeDetails[msg.sender][i].amount;
-      }
 
-      return (startStake, endStake, amount);
-  }
-    
-    function getUnstakeAmount(address _user) public view returns(uint256) {
+    function getStakedSchedule(address _user)
+        external
+        returns (
+            uint256[] memory,
+            uint256[] memory,
+            uint256[] memory
+        )
+    {
+        uint256 stakedCount = getUserStakedCount(_user);
+        uint256[] memory startStake = new uint256[](stakedCount);
+        uint256[] memory endStake = new uint256[](stakedCount);
+        uint256[] memory amount = new uint256[](stakedCount);
+
+        for (uint256 i = 0; i < stakedCount; i++) {
+            startStake[i] = stakeDetails[msg.sender][i].startStakeBlock;
+            endStake[i] = stakeDetails[msg.sender][i].endStakeBlock;
+            amount[i] = stakeDetails[msg.sender][i].amount;
+        }
+
+        return (startStake, endStake, amount);
+    }
+
+    function getUnstakeAmount(address _user) public view returns (uint256) {
         uint256 claimAmount;
-        for(uint256 i = 0; i < stakeDetails[_user].length;  i++) {
+        for (uint256 i = 0; i < stakeDetails[_user].length; i++) {
             if (stakeDetails[_user][i].endStakeBlock < block.number) {
-                claimAmount += stakeDetails[_user][i].amount;   
+                claimAmount += stakeDetails[_user][i].amount;
             }
         }
-        
+
         return claimAmount;
     }
-   
-    function leaveStakeUser() internal returns(uint256) {
+
+    function leaveStakeUser() internal returns (uint256) {
         require(msg.sender != address(0), "Invalid address");
         uint256 claimAmount;
-        for(uint256 i = 0; i < stakeDetails[msg.sender].length;  i++) {
+        for (uint256 i = 0; i < stakeDetails[msg.sender].length; i++) {
             if (stakeDetails[msg.sender][i].endStakeBlock < block.number) {
-                claimAmount += stakeDetails[msg.sender][i].amount;   
+                claimAmount += stakeDetails[msg.sender][i].amount;
                 delete stakeDetails[msg.sender][i];
             }
         }
-        
+
         return claimAmount;
     }
-    
+
     /*
      * @notice Deposit staked tokens and collect reward tokens (if any)
      * @param _amount: amount to withdraw (in rewardToken)
      */
     function deposit(uint256 _amount) external nonReentrant {
+        // Get information of User
         UserInfo storage user = userInfo[msg.sender];
+        // Check value stakingBlock less then block.number
         require(stakingBlock <= block.number, "Staking has not started");
+        // Check value stakingEndBlock greater then block.number
         require(stakingEndBlock >= block.number, "Staking has ended");
-        
-        require(enterStakeUser(_amount),'Unabled to stake');
-        
+        // Setup informationof user join staking
+        require(enterStakeUser(_amount), "Unabled to stake");
+        // Check has limit pool and access with true
         if (hasPoolLimit) {
+        // Add balance of address of smart contract ERC20 and _amount user staking     
             uint256 stakedTokenSupply = stakedToken.balanceOf(address(this));
+        // The balance must less than poolCap(MaximalBalance each other pool)
             require(
                 _amount.add(stakedTokenSupply) <= poolCap,
                 "Pool cap reached"
             );
         }
-
+        // Check has user limit is equals true
         if (hasUserLimit) {
+        // Add amount of user join staking 
             require(
+        // Check balance less then poolLimitPerUser(MaximalBalance balance each other user)       
                 _amount.add(user.amount) <= poolLimitPerUser,
                 "User amount above limit"
             );
         }
-        
+        // Update pool information
         _updatePool();
-
+        // Check user staked to pool liquidity
         if (user.amount > 0) {
             uint256 pending;
+        // Recalculate reward token for user continuing jone steking schedule    
             for (uint256 i = 0; i < rewardTokens.length; i++) {
                 pending = user
-                .amount
-                .mul(accTokenPerShare[rewardTokens[i]])
-                .div(PRECISION_FACTOR[rewardTokens[i]])
-                .sub(user.rewardDebt[rewardTokens[i]]);
+                    .amount
+                    .mul(accTokenPerShare[rewardTokens[i]])
+                    .div(PRECISION_FACTOR[rewardTokens[i]])
+                    .sub(user.rewardDebt[rewardTokens[i]]);
                 if (pending > 0) {
                     ERC20(rewardTokens[i]).transfer(
                         address(msg.sender),
@@ -1201,37 +1206,42 @@ contract BSCSBSCSIDOPool is
                 }
             }
         }
-
-        if (_amount > 0) {
+    // Recalculate reward token for user continuing jone steking schedule after add new _amount of user
+    // Update balance of pool after deposit
+       if (_amount > 0) {
             user.amount = user.amount.add(_amount);
             ERC20(stakedToken).transferFrom(
                 address(msg.sender),
                 address(this),
                 _amount
+
             );
             _mint(address(msg.sender), _amount);
         }
+    // Recalculate reward token for users    
         for (uint256 i = 0; i < rewardTokens.length; i++) {
             user.rewardDebt[rewardTokens[i]] = user
-            .amount
-            .mul(accTokenPerShare[rewardTokens[i]])
-            .div(PRECISION_FACTOR[rewardTokens[i]]);
+                .amount
+                .mul(accTokenPerShare[rewardTokens[i]])
+                .div(PRECISION_FACTOR[rewardTokens[i]]);
         }
-
+    //Set lastStakingBlock for user
         user.lastStakingBlock = block.number;
 
         emit Deposit(msg.sender, _amount);
     }
 
-    function safeERC20Transfer(ERC20 erc20, address _to, uint256 _amount) 
-      private 
-    { 
-      uint256 balance = erc20.balanceOf(address(this));
-      if (_amount > balance) {
-        erc20.transfer(_to, balance); 
-      } 
-      else {
-        erc20.transfer(_to, _amount); }
+    function safeERC20Transfer(
+        ERC20 erc20,
+        address _to,
+        uint256 _amount
+    ) private {
+        uint256 balance = erc20.balanceOf(address(this));
+        if (_amount > balance) {
+            erc20.transfer(_to, balance);
+        } else {
+            erc20.transfer(_to, _amount);
+        }
     }
 
     /*
@@ -1240,15 +1250,15 @@ contract BSCSBSCSIDOPool is
      */
     function withdraw(bool isHarvest) external nonReentrant {
         uint256 _amount = 0;
-        
-         // only check for Unstake token
-        if(isHarvest == false){ 
-              _amount = leaveStakeUser();
-            require(_amount > 0, "Invalid amount");     
+
+        // only check for Unstake token
+        if (isHarvest == false) {
+            _amount = leaveStakeUser();
+            require(_amount > 0, "Invalid amount");
         }
-        
+
         UserInfo storage user = userInfo[msg.sender];
-       
+
         require(user.amount >= _amount, "Amount to withdraw too high");
 
         _updatePool();
@@ -1257,13 +1267,17 @@ contract BSCSBSCSIDOPool is
         uint256 pending;
         for (uint256 i = 0; i < rewardTokens.length; i++) {
             pending = user
-            .amount
-            .mul(accTokenPerShare[rewardTokens[i]])
-            .div(PRECISION_FACTOR[rewardTokens[i]])
-            .sub(user.rewardDebt[rewardTokens[i]]);
+                .amount
+                .mul(accTokenPerShare[rewardTokens[i]])
+                .div(PRECISION_FACTOR[rewardTokens[i]])
+                .sub(user.rewardDebt[rewardTokens[i]]);
             if (pending > 0) {
                 // ERC20(rewardTokens[i]).transfer(address(msg.sender), pending);
-                safeERC20Transfer(ERC20(rewardTokens[i]), address(msg.sender),pending);
+                safeERC20Transfer(
+                    ERC20(rewardTokens[i]),
+                    address(msg.sender),
+                    pending
+                );
             }
         }
         // If _amount > 0 ==> Unstake Token
@@ -1277,9 +1291,9 @@ contract BSCSBSCSIDOPool is
         // Harvest
         for (uint256 i = 0; i < rewardTokens.length; i++) {
             user.rewardDebt[rewardTokens[i]] = user
-            .amount
-            .mul(accTokenPerShare[rewardTokens[i]])
-            .div(PRECISION_FACTOR[rewardTokens[i]]);
+                .amount
+                .mul(accTokenPerShare[rewardTokens[i]])
+                .div(PRECISION_FACTOR[rewardTokens[i]]);
         }
 
         emit Withdraw(msg.sender, _amount);
@@ -1297,7 +1311,6 @@ contract BSCSBSCSIDOPool is
         }
         return _amount;
     }
-
 
     /*
      * @notice Stop rewards
@@ -1428,7 +1441,7 @@ contract BSCSBSCSIDOPool is
         onlyOwner
     {
         // require(block.number < startBlock, "Pool has started");
-        
+
         (bool foundToken, uint256 tokenIndex) = findElementPosition(
             _token,
             rewardTokens
@@ -1568,19 +1581,19 @@ contract BSCSBSCSIDOPool is
                     )
                 );
                 userPendingRewards[i] = user
-                .amount
-                .mul(adjustedTokenPerShare)
-                .div(PRECISION_FACTOR[rewardTokens[i]])
-                .sub(user.rewardDebt[rewardTokens[i]]);
+                    .amount
+                    .mul(adjustedTokenPerShare)
+                    .div(PRECISION_FACTOR[rewardTokens[i]])
+                    .sub(user.rewardDebt[rewardTokens[i]]);
             }
             return (userPendingRewards, rewardTokens);
         } else {
             for (uint256 i = 0; i < rewardTokens.length; i++) {
                 userPendingRewards[i] = user
-                .amount
-                .mul(accTokenPerShare[rewardTokens[i]])
-                .div(PRECISION_FACTOR[rewardTokens[i]])
-                .sub(user.rewardDebt[rewardTokens[i]]);
+                    .amount
+                    .mul(accTokenPerShare[rewardTokens[i]])
+                    .div(PRECISION_FACTOR[rewardTokens[i]])
+                    .sub(user.rewardDebt[rewardTokens[i]]);
             }
             return (userPendingRewards, rewardTokens);
         }
@@ -1610,15 +1623,13 @@ contract BSCSBSCSIDOPool is
             uint256 multiplier = _getMultiplier(lastRewardBlock, block.number);
             uint256 bscsReward = multiplier.mul(rewardPerBlock[_token]);
             uint256 adjustedTokenPerShare = accTokenPerShare[_token].add(
-                bscsReward.mul(PRECISION_FACTOR[_token]).div(
-                    stakedTokenSupply
-                )
+                bscsReward.mul(PRECISION_FACTOR[_token]).div(stakedTokenSupply)
             );
             userPendingReward = user
-            .amount
-            .mul(adjustedTokenPerShare)
-            .div(PRECISION_FACTOR[_token])
-            .sub(user.rewardDebt[_token]);
+                .amount
+                .mul(adjustedTokenPerShare)
+                .div(PRECISION_FACTOR[_token])
+                .sub(user.rewardDebt[_token]);
             return userPendingReward;
         } else {
             return
@@ -1651,12 +1662,11 @@ contract BSCSBSCSIDOPool is
             bscsReward = multiplier.mul(rewardPerBlock[rewardTokens[i]]);
             accTokenPerShare[rewardTokens[i]] = accTokenPerShare[
                 rewardTokens[i]
-            ]
-            .add(
-                bscsReward.mul(PRECISION_FACTOR[rewardTokens[i]]).div(
-                    stakedTokenSupply
-                )
-            );
+            ].add(
+                    bscsReward.mul(PRECISION_FACTOR[rewardTokens[i]]).div(
+                        stakedTokenSupply
+                    )
+                );
         }
         lastRewardBlock = block.number;
     }
@@ -1756,7 +1766,7 @@ contract BSCSBSCSIDOPool is
         _array.pop();
         return (true, _array);
     }
-    
+
     /*
      * @notice Find element position in array.
      * @param _token: token of which to find position
