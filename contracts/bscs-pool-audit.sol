@@ -1023,57 +1023,76 @@ contract BSCSBaseStartPool is
     ) external {
         require(!isInitialized, "Already initialized");
         require(msg.sender == BSCStaion_CASTLE_FACTORY, "Not factory");
+        // Check length _rewardTokens difirrent numner rewardPerBlock   
         require(
             _rewardTokens.length == _rewardPerBlock.length,
             "Mismatch length"
         );
-
+        // Check address token different address (0)
         require(address(_stakedToken) != address(0),"Invalid address");
+        // Check fee address different address (0)
         require(address(_feeCollector) != address(0),"Invalid address");
+        // Checck address of admin different address 0
         require(address(_admin) != address(0),"Invalid address");
-
         // Make this contract initialized
         isInitialized = true;
-
+        // Set stakedAddress equals _stakedToken
         stakedToken = _stakedToken;
+        // Set rewardTokens address(Token Erc20) equals _rewardToken
         rewardTokens = _rewardTokens;
+        // Set blockstart is a _startEndBlocks[0] (First Position)
         startBlock = _startEndBlocks[0];
+        // Set Block done is a _startEndBlocks[0]
         bonusEndBlock = _startEndBlocks[1];
-
+        //Check start block less than end Block
         require(
             _stakingBlocks[0] < _stakingBlocks[1],
             "Staking block exceeds end staking block"
         );
+        // 
+        // Set staking block is _stakingBlocks[0]
         stakingBlock = _stakingBlocks[0];
+        // Set stakingEndBlock is _stakingBlocks[1]
         stakingEndBlock = _stakingBlocks[1];
+        // Set numner stae on bloc is _unStakingBlock
         unStakingBlock = _unStakingBlock;
+        // Set fee staking is _feeSettings[0];
         unStakingFee = _feeSettings[0];
+        // Set time apply fee for staking
         feePeriod = _feeSettings[1];
-        feeCollector = _feeCollector;
+        // Set address Collector equals _feeCollector
+             = _feeCollector;
+        // Check status of owner remove from profit of staking
         isRemovable = _isRemovable;
-
+        // Chek pool must greater then 0
+        // Set hasUserLimit equals true
+        // Set limit pool equals poolLimitPerUser
         if (_poolLimitPerUser > 0) {
             hasUserLimit = true;
             poolLimitPerUser = _poolLimitPerUser;
         }
+        // Chek Liquidity pool greater than 0
         if (_poolCap > 0) {
+        // Set status of hasPoolLimit equals false
             hasPoolLimit = true;
+        // Set number pool litmit    
             poolCap = _poolCap;
         }
-
+        // Set dicimals of reward token 
         uint256 decimalsRewardToken;
+
+        // Set list token create block 
         for (uint256 i = 0; i < _rewardTokens.length; i++) {
             decimalsRewardToken = uint256(_rewardTokens[i].decimals());
             require(decimalsRewardToken < 30, "Must be inferior to 30");
             PRECISION_FACTOR[_rewardTokens[i]] = uint256(
                 10**(uint256(30).sub(decimalsRewardToken))
             );
-            rewardPerBlock[_rewardTokens[i]] = _rewardPerBlock[i];
+            [_rewardTokens[i]] = _rewardPerBlock[i];
         }
 
         // Set the lastRewardBlock as the startBlock
         lastRewardBlock = startBlock;
-
         // Transfer ownership to the admin address who becomes owner of the contract
         transferOwnership(_admin);
     }
