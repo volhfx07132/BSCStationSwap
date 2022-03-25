@@ -41,6 +41,7 @@ contract ERC721 is Context, ERC165, IERC721, IERC721Metadata {
     /**
      * @dev Initializes the contract by setting a `name` and a `symbol` to the token collection.
      */
+
     constructor(string memory name_, string memory symbol_) public {
         _name = name_;
         _symbol = symbol_;
@@ -49,6 +50,7 @@ contract ERC721 is Context, ERC165, IERC721, IERC721Metadata {
     /**
      * @dev See {IERC165-supportsInterface}.
      */
+    // target sp => user less then 300000 gas
     function supportsInterface(bytes4 interfaceId) public view virtual override(ERC165, IERC165) returns (bool) {
         return
             interfaceId == type(IERC721).interfaceId ||
@@ -59,6 +61,7 @@ contract ERC721 is Context, ERC165, IERC721, IERC721Metadata {
     /**
      * @dev See {IERC721-balanceOf}.
      */
+    // Get balance of address 
     function balanceOf(address owner) public view virtual override returns (uint256) {
         require(owner != address(0), "ERC721: balance query for the zero address");
         return _balances[owner];
@@ -67,15 +70,17 @@ contract ERC721 is Context, ERC165, IERC721, IERC721Metadata {
     /**
      * @dev See {IERC721-ownerOf}.
      */
+     // Get id witt input position
     function ownerOf(uint256 tokenId) public view virtual override returns (address) {
         address owner = _owners[tokenId];
         require(owner != address(0), "ERC721: owner query for nonexistent token");
         return owner;
     }
-
+   
     /**
      * @dev See {IERC721Metadata-name}.
      */
+    // get name of token ERC721 
     function name() public view virtual override returns (string memory) {
         return _name;
     }
@@ -83,6 +88,7 @@ contract ERC721 is Context, ERC165, IERC721, IERC721Metadata {
     /**
      * @dev See {IERC721Metadata-symbol}.
      */
+    // get symbol of token ERC821 
     function symbol() public view virtual override returns (string memory) {
         return _symbol;
     }
@@ -91,9 +97,11 @@ contract ERC721 is Context, ERC165, IERC721, IERC721Metadata {
      * @dev See {IERC721Metadata-tokenURI}.
      */
     function tokenURI(uint256 tokenId) public view virtual override returns (string memory) {
+        // Check id of address is exit
         require(_exists(tokenId), "ERC721Metadata: URI query for nonexistent token");
-
+        // Encode baseURI and tokenId of address
         string memory baseURI = _baseURI();
+        // Return token hash function encodeed
         return bytes(baseURI).length > 0 ? string(abi.encodePacked(baseURI, tokenId.toString())) : "";
     }
 
@@ -124,6 +132,7 @@ contract ERC721 is Context, ERC165, IERC721, IERC721Metadata {
     /**
      * @dev See {IERC721-getApproved}.
      */
+    // Get address of mapping _tokebAoorivals
     function getApproved(uint256 tokenId) public view virtual override returns (address) {
         require(_exists(tokenId), "ERC721: approved query for nonexistent token");
 
@@ -133,6 +142,7 @@ contract ERC721 is Context, ERC165, IERC721, IERC721Metadata {
     /**
      * @dev See {IERC721-setApprovalForAll}.
      */
+    // Setup two address ref bool in mapping _tokenApprovals 
     function setApprovalForAll(address operator, bool approved) public virtual override {
         _setApprovalForAll(_msgSender(), operator, approved);
     }
@@ -140,6 +150,7 @@ contract ERC721 is Context, ERC165, IERC721, IERC721Metadata {
     /**
      * @dev See {IERC721-isApprovedForAll}.
      */
+    // Use two address ref bool in mapping _tokenApprovals 
     function isApprovedForAll(address owner, address operator) public view virtual override returns (bool) {
         return _operatorApprovals[owner][operator];
     }
@@ -147,6 +158,7 @@ contract ERC721 is Context, ERC165, IERC721, IERC721Metadata {
     /**
      * @dev See {IERC721-transferFrom}.
      */
+    //Tranfer id token 
     function transferFrom(
         address from,
         address to,
@@ -355,6 +367,7 @@ contract ERC721 is Context, ERC165, IERC721, IERC721Metadata {
      *
      * Emits a {Approval} event.
      */
+     //set value in maping _tokenAprove with id and address
     function _approve(address to, uint256 tokenId) internal virtual {
         _tokenApprovals[tokenId] = to;
         emit Approval(ERC721.ownerOf(tokenId), to, tokenId);
@@ -365,6 +378,7 @@ contract ERC721 is Context, ERC165, IERC721, IERC721Metadata {
      *
      * Emits a {ApprovalForAll} event.
      */
+    //Set approved  
     function _setApprovalForAll(
         address owner,
         address operator,
