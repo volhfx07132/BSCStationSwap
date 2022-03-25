@@ -1026,29 +1026,39 @@ contract BSCSBSCSIDOPool is
         bool _isRemovable,
         address _admin
     ) external {
+        // Check isInitialized equals false
         require(!isInitialized, "Already initialized");
+        // Check address msg.sender equals materchef (Factory)
         require(msg.sender == BSCS_CASTLE_FACTORY, "Not factory");
+        // Check number reward per block must equals rewardToken 
         require(
             _rewardTokens.length == _rewardPerBlock.length,
             "Mismatch length"
         );
-
+        // Check address of stakingToken not equals address(0)
         require(address(_stakedToken) != address(0), "Invalid address");
+        // Check address of feeCollector not equals address(0)
         require(address(_feeCollector) != address(0), "Invalid address");
+        // Check admin address not equals address(0)
         require(address(_admin) != address(0), "Invalid address");
 
         // Make this contract initialized
+        // Setup initialized pool bscs-pool-update equals false
         isInitialized = true;
-
+        // Set aaddres atakedToken
         stakedToken = _stakedToken;
+        // Set address fpr rewardTokens
         rewardTokens = _rewardTokens;
+        // Set startblock
         startBlock = _startEndBlocks[0];
+        // Set bonusEndBlock
         bonusEndBlock = _startEndBlocks[1];
 
         require(
             _stakingBlocks[0] < _stakingBlocks[1],
             "Staking block exceeds end staking block"
         );
+
         stakingBlock = _stakingBlocks[0];
         stakingEndBlock = _stakingBlocks[1];
         unStakingBlock = _unStakingBlock;
@@ -1068,7 +1078,9 @@ contract BSCSBSCSIDOPool is
 
         uint256 decimalsRewardToken;
         for (uint256 i = 0; i < _rewardTokens.length; i++) {
+            //  Get decimals of token ERC20   
             decimalsRewardToken = uint256(_rewardTokens[i].decimals());
+            // Token great then 30
             require(decimalsRewardToken < 30, "Must be inferior to 30");
             PRECISION_FACTOR[_rewardTokens[i]] = uint256(
                 10**(uint256(30).sub(decimalsRewardToken))
@@ -1082,24 +1094,23 @@ contract BSCSBSCSIDOPool is
         // Transfer ownership to the admin address who becomes owner of the contract
         transferOwnership(_admin);
     }
-
+    // Set maximum number block can staking
     function setLockingDuration(uint256 _numbBlocks) external onlyOwner {
         lockingDuration = _numbBlocks;
     }
-
+    
+    // Set information for staking in pool(Ste data for entyti address)
     function enterStakeUser(uint256 _amount) internal returns (bool success) {
         UserStake memory currentStake;
-
         currentStake.addr = msg.sender;
         currentStake.amount = _amount;
         currentStake.startStakeBlock = block.number;
         currentStake.endStakeBlock = block.number + lockingDuration;
-
         stakeDetails[msg.sender].push(currentStake);
-
         return true;
     }
-
+    
+    // Count total user stake amount token to liquidity
     function getUserStakedCount(address _user) internal returns (uint256) {
         uint256 numStakes;
         for (uint256 i = 0; i < stakeDetails[_user].length; i++) {
@@ -1108,6 +1119,9 @@ contract BSCSBSCSIDOPool is
         return numStakes;
     }
 
+    // Get block number user start staking 
+    // Get block number usder end staking
+    // get total amount by user join staking (onlyone unser)
     function getStakedSchedule(address _user)
         external
         returns (
@@ -1129,7 +1143,9 @@ contract BSCSBSCSIDOPool is
 
         return (startStake, endStake, amount);
     }
-
+    
+    // get block number when staking not success
+    // return amount of user staking not successs
     function getUnstakeAmount(address _user) public view returns (uint256) {
         uint256 claimAmount;
         for (uint256 i = 0; i < stakeDetails[_user].length; i++) {
@@ -1140,7 +1156,8 @@ contract BSCSBSCSIDOPool is
 
         return claimAmount;
     }
-
+    // Remove data of user when leaves staking schedule
+    // And back the token of user staked
     function leaveStakeUser() internal returns (uint256) {
         require(msg.sender != address(0), "Invalid address");
         uint256 claimAmount;
@@ -1199,9 +1216,7 @@ contract BSCSBSCSIDOPool is
                     .div(PRECISION_FACTOR[rewardTokens[i]])
                     .sub(user.rewardDebt[rewardTokens[i]]);
                 if (pending > 0) {
-                    ERC20(rewardTokens[i]).transfer(
-                        address(msg.sender),
-                        pending
+                    ERC20(rewardTokens[i]).transfer(address(msg.sender),pending
                     );
                 }
             }
@@ -1225,7 +1240,7 @@ contract BSCSBSCSIDOPool is
                 .mul(accTokenPerShare[rewardTokens[i]])
                 .div(PRECISION_FACTOR[rewardTokens[i]]);
         }
-    //Set lastStakingBlock for user
+    //Set lastStakingBlock for
         user.lastStakingBlock = block.number;
 
         emit Deposit(msg.sender, _amount);
@@ -1244,7 +1259,7 @@ contract BSCSBSCSIDOPool is
         }
     }
 
-    /*
+    /*stakedToken
      * @notice Withdraw staked tokens and collect reward tokens
      * @param _amount: amount to withdraw (in rewardToken)
      */
@@ -1256,14 +1271,13 @@ contract BSCSBSCSIDOPool is
             _amount = leaveStakeUser();
             require(_amount > 0, "Invalid amount");
         }
-
+        // Get the information of user
         UserInfo storage user = userInfo[msg.sender];
-
+        // Check amount of user great then _amount
         require(user.amount >= _amount, "Amount to withdraw too high");
-
+        // Update pool liquidity
         _updatePool();
-
-        // uint256 pending = user.amount.mul(accTokenPerShare).div(PRECISION_FACTOR).sub(user.rewardDebt);
+        // Recalculate reward token for user continuing jone steking schedule    
         uint256 pending;
         for (uint256 i = 0; i < rewardTokens.length; i++) {
             pending = user
@@ -1280,7 +1294,8 @@ contract BSCSBSCSIDOPool is
                 );
             }
         }
-        // If _amount > 0 ==> Unstake Token
+        // Recalculate reward token for user continuing jone steking schedule after add new _amount of user
+    // Update balance of pool after deposit
         if (_amount > 0) {
             user.amount = user.amount.sub(_amount);
             _burn(address(msg.sender), _amount);
@@ -1316,10 +1331,10 @@ contract BSCSBSCSIDOPool is
      * @notice Stop rewards
      * @dev Only callable by owner. Needs to be for emergency.
      */
-    function emergencyRewardWithdraw(uint256 _amount) external onlyOwner {
-        for (uint256 i = 0; i < rewardTokens.length; i++) {
-            ERC20(rewardTokens[i]).transfer(address(msg.sender), _amount);
-        }
+        function emergencyRewardWithdraw(uint256 _amount) external onlyOwner {
+            for (uint256 i = 0; i < rewardTokens.length; i++) {
+                ERC20(rewardTokens[i]).transfer(address(msg.sender), _amount);
+            }
     }
 
     /**
@@ -1328,27 +1343,7 @@ contract BSCSBSCSIDOPool is
      * @param _tokenAmount: the number of tokens to withdraw
      * @dev This function is only callable by admin.
      */
-    function recoverWrongTokens(address _tokenAddress, uint256 _tokenAmount)
-        external
-        onlyOwner
-    {
-        require(
-            _tokenAddress != address(stakedToken),
-            "Cannot be staked token"
-        );
-        // require(_tokenAddress != address(rewardToken), "Cannot be reward token");
-        for (uint256 i = 0; i < rewardTokens.length; i++) {
-            require(
-                _tokenAddress != address(rewardTokens[i]),
-                "Cannot be reward token"
-            );
-        }
-
-        ERC20(_tokenAddress).transfer(address(msg.sender), _tokenAmount);
-
-        emit AdminTokenRecovery(_tokenAddress, _tokenAmount);
-    }
-
+     
     /*
      * @notice Allow owner to remove all staked token from pool.
      * @param _amount: amount to withdraw (in stakedToken)
@@ -1364,6 +1359,7 @@ contract BSCSBSCSIDOPool is
             ERC20(stakedToken).transfer(address(msg.sender), _amount);
         }
     }
+
 
     /*
      * @notice Stop rewards
@@ -1570,7 +1566,7 @@ contract BSCSBSCSIDOPool is
             rewardTokens.length
         );
         if (block.number > lastRewardBlock && stakedTokenSupply != 0) {
-            uint256 multiplier = _getMultiplier(lastRewardBlock, block.number);
+            uint256 multiplier = _getMultiplier(latRewardBlock, block.number);
             uint256 bscsReward;
             uint256 adjustedTokenPerShare;
             for (uint256 i = 0; i < rewardTokens.length; i++) {
@@ -1687,7 +1683,7 @@ contract BSCSBSCSIDOPool is
             return 0;
         } else {
             return bonusEndBlock.sub(_from);
-        }
+        }x  
     }
 
     /*

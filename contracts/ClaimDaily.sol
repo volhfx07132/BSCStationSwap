@@ -479,16 +479,25 @@ contract TokenVesting is Ownable {
      * @dev function that allows receiver to claim tokens, can be called only by receiver
      */
     function claimTokens() public {
+        // Check number token grear then 1000000
         require(totalTokens > 1000000, "Vesting has not been funded yet");
+        // Setup address for user
         address _sender = msg.sender;
+        // Get information of user
         UserInfo storage user = userInfo[_sender];
+        // Amount of user musst greater than user.tokensClaimed
         require(user.amount > user.tokensClaimed.add(1), "All tokens claimed or not whitelist");
+        // Time of blockchian great then startTime
         require(block.timestamp > startTime, "Vesting hasn't started yet");
-
+        // Calculate space timenow to startTIme
         uint256 timePassed = block.timestamp.sub(startTime);
+        // First claim, user cal claim maxvalue = equals 10000
         uint256 firstClaim = user.amount.mul(firstRelease).div(10000);
+        // timePassed less then dilay time
         if (timePassed < cliff) {
+        // user.tokensClaimed not equals 0
             require(user.tokensClaimed == 0, "tokens claimed");
+            
             user.tokensClaimed = user.tokensClaimed.add(firstClaim);
             totalTokens = totalTokens.sub(firstClaim);
             token.transfer(_sender, firstClaim);

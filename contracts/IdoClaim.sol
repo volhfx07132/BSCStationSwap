@@ -436,6 +436,8 @@ event EventEmergencyWithdraw(
     address _to, 
     uint256 _amount
     );
+
+
   constructor(
     address _idoToken, 
     address _refundToken,
@@ -509,7 +511,7 @@ event EventEmergencyWithdraw(
   {
     require(msg.sender == admin,'Not allowed');
     IERC20(_token).safeTransfer(_to, _amount);
-    emit EventEmergencyWithdraw(
+    emit EventEmergencyWithdraw( 
          _token, 
         _to, 
          _amount
@@ -525,6 +527,7 @@ event EventEmergencyWithdraw(
     view
     returns(uint256)
   {
+    // get information of sender
     address recipient = msg.sender;
     uint256 thisBal = IERC20(idoToken).balanceOf(address(this));
     require(thisBal >= _amount,'Not enough balance');
@@ -559,18 +562,19 @@ event EventEmergencyWithdraw(
     bytes calldata sig
       ) 
     external 
-  {
+  {  
+    //Setup address of recipient
     address recipient = msg.sender;
-   
+    // Encode the information of users
     bytes32 message = prefixed(keccak256(abi.encodePacked(
       recipient, 
       _amount,
       _claimRound,
       address(this)
     )));
-     // must be in whitelist 
+    // Must be in whitelist 
     require(recoverSigner(message, sig) == admin , 'wrong signature');
-    
+    // Check time ClaimStartAt great then 0
     require(claimStartAt > 0,'Claim has not started yet');
     require(block.timestamp > claimStartAt,'Claim has not started yet');
      // already refunded
@@ -617,18 +621,29 @@ event EventEmergencyWithdraw(
     )));
       // must be in whitelist 
     require(recoverSigner(message, sig) == admin , 'wrong signature');
-     uint256 thisBal = IERC20(refundToken).balanceOf(address(this));
+    // Get balance of current contract (TokenERC20)
+    uint256 thisBal = IERC20(refundToken).balanceOf(address(this));
+    // Check balance great them _amount (_amount is user claim/refund)
     require(thisBal >= _amount,'Not enough balance');
+    // Check status pool Initialized
     require(initialized == true, 'Not yet initialized');
+    // Check time clain (curent time) great then 0
     require(claimStartAt > 0,'Not yet started');
+    // Check block number less then refandBlockNumber
     require(block.number < refundBlockNumber, 'Refund is no longer allowed');
+    // Check refundBlockNumber less than refandBlockNumber
     require(refundBlockNumber > 0, 'Not refundable');
+    // Check address recipient exit in mapping userRefund
     require(userRefund[recipient] == false,'Refunded');
+    // Check address recipient is not yet active
     require(isClaimed[recipient] == false, 'Already claimed');
-    
+    // Get balance of current contract (TokenERC20) must great then 0
     if (thisBal > 0) {
+    // Set address recipient in mapping userRefund equals true  
         userRefund[recipient] = true;
+    // Continue add _amount and Setup value to totalRefunded(Maping)   
         totalRefunded[recipient] = totalRefunded[recipient] + _amount;
+    //Transfer token ERC20 to address of recipient 
         IERC20(refundToken).safeTransfer(recipient, _amount);
         emit EventRefunded(
           recipient,
